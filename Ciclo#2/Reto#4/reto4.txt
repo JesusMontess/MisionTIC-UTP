@@ -1,0 +1,477 @@
+//importacion 
+import java.io.File;//Para verificación de longitud de base de datos
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
+//clase para la conexion BD
+public class JDBCUtilities {
+
+    // Atributos de clase para gestión de conexión con la base de datos
+    private static final String UBICACION_BD = "ProyectosConstruccion.db";
+
+    public static Connection getConnection() throws SQLException {
+        String url = "jdbc:sqlite:" + UBICACION_BD;
+        return DriverManager.getConnection(url);
+    }
+
+    public static boolean estaVacia() {
+        File archivo = new File(JDBCUtilities.UBICACION_BD);
+        return archivo.length() == 0;
+    }
+
+}
+//Controller
+public class Controlador {
+    //Atributos de los DAO
+    private final ProyectoDao proyectoDao;
+    private final LiderDao liderDao;
+    //MetodoConstuctor
+    public Controlador() {
+        this.proyectoDao = new ProyectoDao();
+        this.liderDao = new LiderDao();
+    }
+
+    //Metodos de las clases
+    public ArrayList<Proyecto> Solucionar_requerimiento_1() throws SQLException {
+        //Llamamos los resultados de los query ejecutados
+        return this.proyectoDao.query_requerimiento_1();
+    }
+
+    public ArrayList<Proyecto> Solucionar_requerimiento_2() throws SQLException {
+        return this.proyectoDao.query_requerimiento_2();
+        
+    }
+
+    public ArrayList<Proyecto> Solucionar_requerimiento_3() throws SQLException {
+        return this.proyectoDao.query_requerimiento_3();
+        
+    }
+
+    public ArrayList<Lider> Solucionar_requerimiento_4() throws SQLException {
+        return this.liderDao.query_requerimiento_4();
+        
+    }
+
+    public ArrayList<Proyecto> Solucionar_requerimiento_5() throws SQLException {
+        return this.proyectoDao.query_requerimiento_5();
+        
+    }
+
+}
+//Model dao
+//Estructura de datos
+public class LiderDao {
+
+    public ArrayList<Lider> query_requerimiento_4() throws SQLException {
+        //Conexion con la BD
+        Connection conexion = JDBCUtilities.getConnection();
+        //Creamos un Arreglo para para almacenar objetos tipo proyecto
+        ArrayList<Lider> lideres = new ArrayList<Lider>();
+        //Consultas
+        try {
+            //Ejecuta la consulta query
+            ResultSet query = conexion.createStatement().executeQuery(
+                "SELECT l.Nombre, l.Primer_Apellido FROM Proyecto p INNER JOIN Lider l ON l.ID_Lider = p.ID_Lider WHERE p.Ciudad = 'Manizales'"
+            );
+            //while Recorre los resultados del Query
+            while (query.next()){
+                //Almacenamos los resultados del query en un objeto Lider
+                Lider objLider = new Lider(query.getString("Nombre"), query.getString("Primer_Apellido"));
+                //Agregamos el objeto al arrayList
+                lideres.add(objLider);
+
+            }
+        } catch (Exception e) {
+            //TODO: handle exception
+            System.out.println(e);
+        }
+        //Retornamos el ArrayList Lideres
+        return lideres;
+        
+    }// Fin del método query_requerimiento_4
+
+}
+//Estructura de datos
+
+public class ProyectoDao {
+    
+
+    public ArrayList<Proyecto> query_requerimiento_1() throws SQLException {
+        //Conexion con la BD
+        Connection conexion = JDBCUtilities.getConnection();
+        //Creamos un Arreglo para para almacenar objetos tipo proyecto
+        ArrayList<Proyecto> proyectos = new ArrayList<Proyecto>();
+        //Consultas
+        try {
+            //Consulta para mostrar los datos de la BD
+            String consulta = "SELECT Fecha_Inicio, Numero_Habitaciones, Clasificacion FROM Proyecto WHERE Ciudad= 'Manizales' ";
+            //Ejecutamos la consulta
+            PreparedStatement statement = conexion.prepareStatement(consulta);
+            ResultSet resultSet = statement.executeQuery();
+            //Recorremos los registros en los VO especifivos
+            while (resultSet.next()){
+                //Almacenamos los resultados del query e un objeto Proyecto
+                Proyecto objProyecto = new Proyecto();
+                objProyecto.setFecha_inicio(resultSet.getString("Fecha_Inicio"));
+                objProyecto.setNum_habitaciones(resultSet.getInt("Numero_Habitaciones"));
+                objProyecto.setClasificacion(resultSet.getString("clasificacion"));
+                //Añadimos todos los objetos al array proyectos
+                proyectos.add(objProyecto);
+            }
+            //cerramos el query
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            //Todo: handle exception
+            System.err.println("Erro en la Consulta "+ e);
+ 
+        } finally {
+            //cerramos la conexion a la BD
+            if (conexion != null){
+                conexion.close();
+            }
+        }
+        //Retornamos el ArrayList la coleccion de VO
+        return proyectos;
+
+    }
+
+    public ArrayList<Proyecto> query_requerimiento_2() throws SQLException {
+        //Conexion con la BD
+        Connection conexion = JDBCUtilities.getConnection();
+        //Creamos un Arreglo para para almacenar objetos tipo proyecto
+        ArrayList<Proyecto> proyectos = new ArrayList<Proyecto>();
+        //Consultas
+        try {
+            //Ejecutamos el query de la consulta
+            ResultSet query = conexion.createStatement().executeQuery(
+                "SELECT p.Fecha_Inicio, p.Numero_Habitaciones, p.Clasificacion, l.Nombre, l.Primer_Apellido, t.Estrato FROM Proyecto p INNER JOIN Lider l ON l.ID_Lider = p.ID_Lider INNER JOIN Tipo t ON t.ID_Tipo = p.ID_Tipo WHERE p.Ciudad = 'Manizales'"
+            );
+            //Recorremos los registros en los VO especifivos
+            while (query.next()){
+                //Almacenamos los resultados del query e un objeto Proyecto
+                Proyecto objProyecto = new Proyecto();
+                objProyecto.setFecha_inicio(query.getString("Fecha_Inicio"));
+                objProyecto.setNum_habitaciones(query.getInt("Numero_Habitaciones"));
+                objProyecto.setClasificacion(query.getString("clasificacion"));
+                objProyecto.setEstrato_proyecto(query.getInt("Estrato"));
+                //Creamos el Objeto Lider
+                String nombre_lider = query.getString("Nombre");
+                String apellido_lider = query.getString("Primer_Apellido");
+                Lider objLider = new Lider(nombre_lider, apellido_lider);
+                objProyecto.setLider(objLider);
+                //Añadimos todos los objetos al array proyectos
+                proyectos.add(objProyecto);
+            }
+            
+        } catch (Exception e) {
+            //Todo: handle exception
+            System.out.println(e);
+ 
+        } 
+        //Retornamos el ArrayList proyecto
+        return proyectos;
+        
+    }// Fin del método query_requerimiento_2
+
+
+    public ArrayList<Proyecto> query_requerimiento_3() throws SQLException {
+        //Conexion con la BD
+        Connection conexion = JDBCUtilities.getConnection();
+        //Creamos un Arreglo para para almacenar objetos tipo proyecto
+        ArrayList<Proyecto> proyectos = new ArrayList<Proyecto>();
+        //Consultas
+        try {
+            //Ejecutamos el query de la consulta
+            ResultSet query = conexion.createStatement().executeQuery(
+                "SELECT COUNT(p.Clasificacion) AS Condominios, Constructora FROM Proyecto p WHERE p.Clasificacion = 'Condominio' GROUP BY Constructora"
+            );
+            //Recorremos los registros en los VO especifivos
+            while (query.next()){
+                //Almacenamos los resultados del query e un objeto Proyecto
+                Proyecto objProyecto = new Proyecto();
+                objProyecto.setNum_condominios(query.getInt("Condominios"));
+                objProyecto.setNombre_constructora(query.getString("Constructora"));
+                
+                //Añadimos todos los objetos al array proyectos
+                proyectos.add(objProyecto);
+            }
+            
+        } catch (Exception e) {
+            //Todo: handle exception
+            System.out.println(e);
+ 
+        } 
+        //Retornamos el ArrayList proyecto
+        return proyectos;
+        
+    }// Fin del método query_requerimiento_3
+    
+
+
+    public ArrayList<Proyecto> query_requerimiento_5() throws SQLException{
+        //Conexion con la BD
+        Connection conexion = JDBCUtilities.getConnection();
+        //Creamos un Arreglo para para almacenar objetos tipo proyecto
+        ArrayList<Proyecto> proyectos = new ArrayList<Proyecto>();
+        //Consultas
+        try {
+            //Ejecutamos el query de la consulta
+            ResultSet query = conexion.createStatement().executeQuery(
+                "SELECT COUNT(p.Clasificacion) AS 'Condominios', p.Constructora  AS 'Constructora' FROM Proyecto p WHERE p.Clasificacion = 'Condominio' GROUP BY p.Constructora HAVING COUNT(p.clasificacion) > 11 ORDER BY COUNT(p.clasificacion) ASC "
+            );
+            //Recorremos los registros en los VO especifivos
+            while (query.next()){
+                //Almacenamos los resultados del query e un objeto Proyecto
+                Proyecto objProyecto = new Proyecto();
+                objProyecto.setNum_condominios(query.getInt("Condominios"));
+                objProyecto.setNombre_constructora(query.getString("Constructora"));
+                
+                //Añadimos todos los objetos al array proyectos
+                proyectos.add(objProyecto);
+            }
+            
+        } catch (Exception e) {
+            //Todo: handle exception
+            System.out.println(e);
+ 
+        } 
+        //Retornamos el ArrayList proyecto
+        return proyectos;
+        
+        
+    }// Fin del método query_requerimiento_5
+
+}
+//model vo
+//lider
+public class Lider{
+    /*************
+     * Atributos
+     *************/
+    private String nombre;
+    private String apellido;
+
+    //Constructor
+    public Lider(String nombre, String apellido) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+    }
+
+    //Consultores y Modificadores
+    
+    public String getNombre() {
+        return nombre;
+    }
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+    public String getApellido() {
+        return apellido;
+    }
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
+
+    
+}
+//vo proyecto
+public class Proyecto {
+
+    private String fecha_inicio;
+    private int num_habitaciones;
+    private String clasificacion;
+    private int estrato_proyecto;
+    private Lider lider;
+    private int num_condominios;
+    private String nombre_constructora;
+
+    public Proyecto() {
+
+    }
+
+    /*******************************
+     * Consultores y modificadores
+     ********************************/
+
+    public String getFecha_inicio() {
+        return fecha_inicio;
+    }
+
+    public void setFecha_inicio(String fecha_inicio) {
+        this.fecha_inicio = fecha_inicio;
+    }
+
+    public int getNum_habitaciones() {
+        return num_habitaciones;
+    }
+
+    public void setNum_habitaciones(int num_habitaciones) {
+        this.num_habitaciones = num_habitaciones;
+    }
+
+    public String getClasificacion() {
+        return clasificacion;
+    }
+
+    public void setClasificacion(String clasificacion) {
+        this.clasificacion = clasificacion;
+    }
+
+    public Lider getLider() {
+        return lider;
+    }
+
+    public void setLider(Lider lider) {
+        this.lider = lider;
+    }
+
+    public int getEstrato_proyecto() {
+        return estrato_proyecto;
+    }
+
+    public void setEstrato_proyecto(int estrato_proyecto) {
+        this.estrato_proyecto = estrato_proyecto;
+    }
+
+    public int getNum_condominios() {
+        return num_condominios;
+    }
+
+    public void setNum_condominios(int num_condominios) {
+        this.num_condominios = num_condominios;
+    }
+
+    public String getNombre_constructora() {
+        return nombre_constructora;
+    }
+
+    public void setNombre_constructora(String nombre_constructora) {
+        this.nombre_constructora = nombre_constructora;
+    }
+
+    
+
+}
+//view
+
+
+public class Vista {
+    //Instanciamos el controlador de manera estatica
+    public static final Controlador controlador = new Controlador();
+    //generamos la vista para el requerimiento 1
+    public static void vista_requerimiento_1() {
+
+        try {
+            //Lista para la consulta del requerimiento1
+            ArrayList<Proyecto> proyectos = controlador.Solucionar_requerimiento_1();
+            //Recorremos la lista para mostrar la informacion de las consultas
+            for (int i = 0; i < proyectos.size(); i++) {
+                //Datos para mostrar en Consola
+                String info = "Fecha_Inicio: " + proyectos.get(i).getFecha_inicio();
+                info += " - Numero_Habitaciones: " + proyectos.get(i).getNum_habitaciones();
+                info += " - Clasificación: " + proyectos.get(i).getClasificacion();
+                //Imprimir los datos iterador del array List
+                System.out.println(info);
+
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ha ocurrido un error!" + e.getMessage());
+        }
+
+    }
+    //generamos la vista para el requerimiento 2
+    public static void vista_requerimiento_2() {
+        try {
+            //Lista para la consulta del requerimiento2
+            ArrayList<Proyecto> proyectos = controlador.Solucionar_requerimiento_2();
+            //Recorremos la lista para mostrar la informacion de las consultas
+            for (int i = 0; i < proyectos.size(); i++) {
+                //Datos para mostrar en Consola
+                String info = "Fecha_Inicio: " + proyectos.get(i).getFecha_inicio();
+                info += " - Numero_Habitaciones: " + proyectos.get(i).getNum_habitaciones();
+                info += " - Clasificación: " + proyectos.get(i).getClasificacion();
+                info += " - Nombre_Lider: " + proyectos.get(i).getLider().getNombre();
+                info += " - Apellido_Lider: " + proyectos.get(i).getLider().getApellido();
+                info += " - Estrato_Proyecto: " + proyectos.get(i).getEstrato_proyecto();
+                //Imprimir los datos iterado del array List
+                System.out.println(info);
+
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ha ocurrido un error!" + e.getMessage());
+        }
+        
+
+    }
+    //generamos la vista para el requerimiento 3
+    public static void vista_requerimiento_3() {
+        try {
+            //Lista para la consulta del requerimiento3
+            ArrayList<Proyecto> proyectos = controlador.Solucionar_requerimiento_3();
+            //Recorremos la lista para mostrar la informacion de las consultas
+            for (int i = 0; i < proyectos.size(); i++) {
+                //Datos para mostrar en Consola
+                String info = "Condominios: " + proyectos.get(i).getNum_condominios();
+                info += " - Constructora: " + proyectos.get(i).getNombre_constructora();
+                
+                //Imprimir los datos iterado del array List
+                System.out.println(info);
+
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ha ocurrido un error!" + e.getMessage());
+        }
+   
+        
+    }
+
+    public static void vista_requerimiento_4() {
+        try {
+            //Lista para la consulta del requerimiento2
+            ArrayList<Lider> lideres = controlador.Solucionar_requerimiento_4();
+            //Recorremos la lista para mostrar la informacion de las consultas
+            for (int i = 0; i < lideres.size(); i++) {
+                //Datos para mostrar en Consola
+                String info = "Nombre_Lider: " + lideres.get(i).getNombre() + 
+                " - Apellido_Lider: " + lideres.get(i).getApellido();
+                //Imprimir los datos iterado del array List
+                System.out.println(info);
+
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ha ocurrido un error!" + e.getMessage());
+        }
+        
+    }
+
+    public static void vista_requerimiento_5() {
+        try {
+            //Lista para la consulta del requerimiento5
+            ArrayList<Proyecto> proyectos = controlador.Solucionar_requerimiento_5();
+            //Recorremos la lista para mostrar la informacion de las consultas
+            for (int i = 0; i < proyectos.size(); i++) {
+                //Datos para mostrar en Consola
+                String info = "Condominios: " + proyectos.get(i).getNum_condominios();
+                info += " - Constructora: " + proyectos.get(i).getNombre_constructora();
+                
+                //Imprimir los datos iterado del array List
+                System.out.println(info);
+
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Ha ocurrido un error!" + e.getMessage());
+        }
+        
+    }
+
+}
