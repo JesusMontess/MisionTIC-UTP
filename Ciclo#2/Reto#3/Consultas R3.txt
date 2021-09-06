@@ -1,0 +1,104 @@
+/*De la tabla ‘Proyecto’ obtener la fecha de inicio del proyecto, número de habitaciones y 
+clasificación de los proyecto que han sido ejecutados en la ciudad de Manizales*/
+
+SELECT p.Fecha_Inicio, p.Numero_Habitaciones, p.Clasificacion 
+FROM Proyecto p 
+WHERE p.Ciudad = 'Manizales'
+
+/*
+ Obtener fecha inicio de los proyectos, número de habitaciones, clasificación, nombre y primer 
+apellido del lider de cada proyecto y por último el estrato donde se llevará a cabo la ejecución de
+los proyectos que son llevados a cabo en la ciudad de Manizales (deberá interactuar con las 
+tablas: Proyecto, Lider y Tipo).
+*/
+SELECT p.Fecha_Inicio, p.Numero_Habitaciones, p.Clasificacion, l.Nombre, l.Primer_Apellido, t.Estrato 
+FROM Proyecto p, Lider l, Tipo t 
+WHERE p.ID_Lider=l.ID_Lider AND p.ID_Tipo=t.ID_Tipo AND p.Ciudad = 'Manizales'
+
+/*Obtener la cantidad total de ‘Condominios’ construidos por cada ‘Constructora’ (hacer uso de 
+alias, la respuesta debe mostrar al final las columnas: Condominios y Constructora. Debe 
+manipular las columnas Condominios y Constructora).*/
+
+SELECT COUNT(p.Clasificacion) as Condominios, p.Constructora as Constructora 
+FROM Proyecto p 
+WHERE  p.Clasificacion ='Condominios'
+----------------------------------------------------------*****
+SELECT COUNT(p.clasificacion) AS "Condominios", p.constructora AS "Constructora"
+FROM Proyecto p 
+WHERE p.Clasificacion = 'Condominio'
+GROUP BY p.Constructora
+--HAVING COUNT(p.clasificacion) > 15;
+/*Obtener el nombre y primer apellido concatenado por un espacio de todos los lideres de la 
+ciudad de Manizales, poner el alias de ‘lider’ a la columna de respuesta.*/
+SELECT l.Nombre ||' '|| l.Primer_Apellido as lider
+FROM Lider l, Proyecto p2 
+WHERE p2.ID_Lider = l.ID_Lider AND p2.Ciudad = 'Manizales'
+--GROUP BY l.Nombre 
+/*Obtener desde la tabla ‘Proyecto’ la cantidad total de proyectos ‘Clasificados’ como 
+‘Condominios’ construidos por cada ‘Constructora’ y mostrar únicamente los registros que 
+tengan una cantidad total de condominios construidos mayor a 80 unidades, ordenar los registros
+por la columna de respuesta ‘Condominios’ de menor a mayor (hacer uso de alias, las columnas 
+de respuesta deben ser: Condominios y Constructora) */
+
+SELECT COUNT(p.clasificacion) AS "Condominios", p.constructora AS "Constructora"
+FROM Proyecto p 
+WHERE p.Clasificacion = 'Condominio'
+GROUP BY p.Constructora
+ORDER BY COUNT(p.clasificacion) ASC
+HAVING COUNT(p.clasificacion) > 15;
+
+SELECT COUNT(p.clasificacion) AS "Condominios", p.constructora AS "Constructora"
+FROM Proyecto p 
+WHERE p.Clasificacion = 'Condominio'
+GROUP BY p.Constructora 
+HAVING COUNT(p.clasificacion) > 80
+ORDER BY COUNT(p.clasificacion) ASC;
+
+SELECT COUNT(p.Clasificacion) AS "Condominios", p.Constructora  AS "Constructora"
+FROM Proyecto p 
+WHERE p.Clasificacion = 'Condominio'
+GROUP BY p.Constructora
+HAVING COUNT(p.clasificacion) > 12
+ORDER BY COUNT(p.clasificacion) ASC
+
+SELECT COUNT(l.Clasificacion) AS "Condominios", p.Constructora  AS "Constructora"
+FROM Proyecto p, Lider l 
+WHERE p.ID_Lider = l.ID_Lider AND p.Clasificacion = 'Condominio'
+--------------------------------------------------------
+
+SELECT  COUNT(p.id_proyecto) as 'Numero Proyectos'
+FROM Proyecto p, Compra c , MaterialConstruccion mc 
+WHERE p.Fecha_Inicio >='2019-12-12' AND p.ID_Proyecto=c.ID_Proyecto AND c.ID_MaterialConstruccion=mc.ID_MaterialConstruccion 
+
+
+SELECT  COUNT(p.id_proyecto) as 'Numero Proyectos'
+FROM Proyecto p, MaterialConstruccion mc, Compra c, Lider l 
+WHERE  p.ID_Proyecto = c.ID_Proyecto AND c.ID_MaterialConstruccion = mc.ID_MaterialConstruccion  AND p.ID_Lider = l.ID_Lider 
+AND p.Fecha_Inicio >= "2019-12-12" AND NOT (l.ID_Lider = 6)
+AND NOT(mc.ID_MaterialConstruccion = 1 AND 7)
+
+SELECT * 
+FROM Proyecto p NATURAL JOIN MaterialConstruccion mc NATURAL JOIN Compra c NATURAL JOIN Lider l 
+WHERE p.ID_Lider NOT IN(SELECT PROYECTO.ID_Lider FROM Proyecto WHERE PROYECTO.ID_Lider =6) AND p.Fecha_Inicio >= "2019-12-12"
+
+SELECT SUBSTRING(Nombre,1,2)
+FROM Lider
+
+SELECT SUBSTRING(Nombre,1,1)||""||SUBSTRING(Primer_Apellido,1,1)||""||SUBSTRING(Segundo_Apellido,1,1) AS "Abrev"
+FROM Lider;
+
+SELECT p.Constructora, SUM(l.Salario) as "Salario Lider"
+FROM Proyecto p, Lider l 
+WHERE p.ID_Lider=l.ID_Lider AND l.Salario >31000000 AND l.Salario <34000000
+
+SELECT p.Constructora , SUM(l.Salario) as Total
+FROM Proyecto p, Lider l 
+WHERE p.ID_Lider=l.ID_Lider 
+GROUP BY p.Constructora
+HAVING SUM(l.Salario)>31000000 AND SUM(l.Salario)<34000000 
+
+SELECT p.Constructora , SUM(l.Salario) as Total
+FROM Proyecto p, Lider l 
+WHERE p.ID_Lider=l.ID_Lider 
+GROUP BY p.Constructora
+HAVING SUM(l.Salario) BETWEEN 31000000 AND 34000000;
